@@ -1,0 +1,10 @@
+[Unit]
+Description=Run devkg-watcher daily
+
+[Timer]
+OnCalendar=*-*-* 10:00:00 Asia/Bishkek
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

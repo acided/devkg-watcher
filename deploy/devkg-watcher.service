@@ -1,0 +1,10 @@
+[Unit]
+Description=devkg.com new vacancies watcher
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/devkg-watcher
+ExecStart=/usr/bin/docker compose run --rm -T watcher

@@ -1,0 +1,14 @@
+# Lives in /opt/devkg-watcher on the server; uploaded by CI on every deploy.
+# IMAGE_TAG comes from /opt/devkg-watcher/.env (written by CI), secrets from app.env.
+name: devkg-watcher
+
+services:
+  watcher:
+    image: ghcr.io/acided/devkg-watcher:${IMAGE_TAG:-latest}
+    env_file: app.env
+    volumes:
+      - data:/data
+    restart: "no"
+
+volumes:
+  data:
