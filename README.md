@@ -4,7 +4,7 @@ Daily check of [devkg.com/ru/rabota](https://devkg.com/ru/rabota) for new vacanc
 
 - Walks all list pages (`?page=N`) until an empty one, parses cards, dedups by the numeric vacancy ID.
 - New = ID not seen before (stored in SQLite). The list is not sorted by ID, so the whole list is scanned every run.
-- All new vacancies are sent; keyword matches (see `devkg_watcher/relevance.py`, override with `DEVKG_KEYWORDS`) are marked with ⭐ and go first.
+- All new vacancies are sent; keyword matches (see `devkg_watcher/relevance.py`, override with `DEVKG_KEYWORDS`) are marked with ⭐ and go first. Keywords are searched in the title and description preview; a stop word in the title (senior, lead, java, c#, .net, менеджер, ...; override with `DEVKG_EXCLUDE`) removes the ⭐.
 - First run seeds the DB and sends a summary with the currently relevant vacancies only.
 - Vacancies are stored only after a successful send, so a Telegram failure means a retry on the next run.
 - If page 1 parses to zero vacancies (markup changed), an alert is sent and the run exits with code 1.

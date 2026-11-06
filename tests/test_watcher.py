@@ -98,6 +98,37 @@ def test_relevance(title, expected):
     assert RelevanceMatcher().is_relevant(make_vacancy(1, title=title)) is expected
 
 
+@pytest.mark.parametrize(
+    "title, snippet, expected",
+    [
+        ("Senior C#/.NET разработчик / Tech Lead", "Backend, PostgreSQL", False),
+        ("Backend Java Developer", "", False),
+        ("Java-разработчик", "PostgreSQL", False),
+        ("Senior Backend-разработчик (NodeJS)", "", False),
+        ("Менеджер по развитию бизнеса (B2B SaaS / AI / Automation)", "Telegram", False),
+        ("Стажер ассистент руководителя удаленно", "", False),
+        ("JavaScript Developer / Vibe Coding Mentor", "", True),  # "java" not in "javascript"
+        ("ASP.NET разработчик", "", False),
+        ("Python разработчик (Middle+)", "", True),
+        ("Разработчик", "Python, FastAPI", True),  # keyword only in the description
+    ],
+)
+def test_relevance_exclude_by_title(title, snippet, expected):
+    vacancy = make_vacancy(1, title=title, snippet=snippet)
+    assert RelevanceMatcher().is_relevant(vacancy) is expected
+
+
+def test_exclude_word_in_snippet_does_not_exclude():
+    vacancy = make_vacancy(1, title="Python developer", snippet="работа с senior командой на Java")
+    assert RelevanceMatcher().is_relevant(vacancy)
+
+
+def test_relevance_custom_exclude():
+    matcher = RelevanceMatcher(exclude=["middle"])
+    assert not matcher.is_relevant(make_vacancy(1, title="Middle Python developer"))
+    assert matcher.is_relevant(make_vacancy(1, title="Senior Python developer"))
+
+
 def test_relevance_custom_keywords():
     matcher = RelevanceMatcher(["golang"])
     assert matcher.is_relevant(make_vacancy(1, title="Golang dev"))

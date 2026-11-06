@@ -13,7 +13,7 @@ import httpx
 
 from .notify import TelegramSender, build_messages, format_vacancy
 from .parser import BASE_URL, LIST_PATH, Vacancy, parse_page
-from .relevance import DEFAULT_KEYWORDS, RelevanceMatcher
+from .relevance import DEFAULT_EXCLUDE, DEFAULT_KEYWORDS, RelevanceMatcher
 from .storage import Storage
 
 log = logging.getLogger("devkg_watcher")
@@ -64,6 +64,11 @@ def fetch_all(fetch: Callable[[int], str], pause: float = REQUEST_PAUSE_SEC) -> 
     else:
         log.warning("reached MAX_PAGES=%d, the list may be truncated", MAX_PAGES)
     return result
+
+
+def _env_list(name: str) -> list[str]:
+    """Comma-separated env var as a list of non-empty items."""
+    return [item for item in os.environ.get(name, "").split(",") if item.strip()]
 
 
 def _plural_vacancies(n: int) -> str:
@@ -129,9 +134,9 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)  # its INFO logs leak the bot token
 
-    env_keywords = os.environ.get("DEVKG_KEYWORDS", "")
-    keywords = [k for k in env_keywords.split(",") if k.strip()] or list(DEFAULT_KEYWORDS)
-    matcher = RelevanceMatcher(keywords)
+    keywords = _env_list("DEVKG_KEYWORDS") or DEFAULT_KEYWORDS
+    exclude = _env_list("DEVKG_EXCLUDE") or DEFAULT_EXCLUDE
+    matcher = RelevanceMatcher(keywords, exclude)
 
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
