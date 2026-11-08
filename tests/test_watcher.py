@@ -185,7 +185,9 @@ def test_second_run_reports_only_new_relevant_first(storage):
     assert sent[0].index("React dev") < sent[0].index("Бухгалтер")
 
     assert run(vacancies, storage, RelevanceMatcher(), sent.append) == 0
-    assert len(sent) == 1  # nothing new, nothing sent
+    assert len(sent) == 2  # nothing new: a heartbeat message only
+    assert "новых вакансий не появилось" in sent[1]
+    assert "на сайте 3" in sent[1]
 
 
 def test_failed_send_keeps_vacancies_unseen(storage):
@@ -200,3 +202,33 @@ def test_failed_send_keeps_vacancies_unseen(storage):
     sent = []
     assert run([make_vacancy(1), make_vacancy(2)], storage, RelevanceMatcher(), sent.append) == 1
     assert len(sent) == 1
+
+
+# --- main -------------------------------------------------------------------
+
+
+def test_main_alerts_on_unexpected_failure(monkeypatch, tmp_path):
+    import devkg_watcher.main as main_module
+
+    sent = []
+
+    class FakeSender:
+        def __init__(self, token, chat_id, client):
+            pass
+
+        def send(self, text):
+            sent.append(text)
+
+    def broken_fetch_all(_fetch):
+        raise RuntimeError("devkg <down> for SECRET-TOKEN")
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "SECRET-TOKEN")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setattr(main_module, "TelegramSender", FakeSender)
+    monkeypatch.setattr(main_module, "fetch_all", broken_fetch_all)
+
+    assert main_module.main(["--db", str(tmp_path / "db.sqlite3")]) == 1
+    assert len(sent) == 1
+    assert "запуск упал: RuntimeError" in sent[0]
+    assert "&lt;down&gt;" in sent[0]
+    assert "SECRET-TOKEN" not in sent[0]

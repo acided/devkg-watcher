@@ -8,6 +8,7 @@ import os
 import sys
 import time
 from collections.abc import Callable
+from html import escape
 
 import httpx
 
@@ -96,6 +97,8 @@ def run(
 
     new = [(v, matcher.is_relevant(v)) for v in vacancies if v.id not in known]
     if not new:
+        # Daily heartbeat: an empty day must look different from a dead bot.
+        send(f"✅ <b>devkg</b>: новых вакансий не появилось (на сайте {len(vacancies)})")
         log.info("no new vacancies (%d listed)", len(vacancies))
         return 0
 
@@ -161,19 +164,26 @@ def main(argv: list[str] | None = None) -> int:
         else:
             send = TelegramSender(token, chat_id, client).send
 
+        def alert(text: str) -> None:
+            if args.dry_run:
+                return
+            if token:
+                text = text.replace(token, "***")  # exception text may embed the API URL
+            try:
+                send(f"⚠️ <b>devkg-watcher</b>: {escape(text)}")
+            except Exception:
+                log.exception("could not send the failure alert")
+
         try:
             vacancies = fetch_all(lambda page: fetch_page(client, page))
             run(vacancies, storage, matcher, send)
         except LayoutChangedError as exc:
             log.error("%s", exc)
-            if not args.dry_run:
-                try:
-                    send(f"⚠️ <b>devkg-watcher</b>: {exc}")
-                except Exception:
-                    log.exception("could not send the layout alert")
+            alert(str(exc))
             return 1
-        except Exception:
+        except Exception as exc:
             log.exception("run failed")
+            alert(f"запуск упал: {type(exc).__name__}: {exc}"[:500])
             return 1
         finally:
             storage.close()
