@@ -1,8 +1,8 @@
 [Unit]
-Description=Run devkg-watcher daily
+Description=Run devkg-watcher twice a day
 
 [Timer]
-OnCalendar=*-*-* 10:00:00 Asia/Bishkek
+OnCalendar=*-*-* 10,19:00:00 Asia/Bishkek
 RandomizedDelaySec=5min
 Persistent=true
 

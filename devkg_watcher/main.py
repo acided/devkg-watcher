@@ -97,7 +97,7 @@ def run(
 
     new = [(v, matcher.is_relevant(v)) for v in vacancies if v.id not in known]
     if not new:
-        # Daily heartbeat: an empty day must look different from a dead bot.
+        # Per-run heartbeat: an empty run must look different from a dead bot.
         send(f"✅ <b>devkg</b>: новых вакансий не появилось (на сайте {len(vacancies)})")
         log.info("no new vacancies (%d listed)", len(vacancies))
         return 0

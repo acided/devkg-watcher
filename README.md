@@ -1,6 +1,6 @@
 # devkg-watcher
 
-Daily check of [devkg.com/ru/rabota](https://devkg.com/ru/rabota) for new vacancies with a Telegram digest.
+Twice-daily check of [devkg.com/ru/rabota](https://devkg.com/ru/rabota) for new vacancies with a Telegram digest.
 
 - Walks all list pages (`?page=N`) until an empty one, parses cards, dedups by the numeric vacancy ID.
 - New = ID not seen before (stored in SQLite). The list is not sorted by ID, so the whole list is scanned every run.
@@ -27,7 +27,7 @@ GitHub Actions (`.github/workflows/ci-cd.yml`) on every push to `main`:
 2. **build**: native arm64 image on `ubuntu-24.04-arm`, pushed to `ghcr.io/acided/devkg-watcher` as `:<sha>` and `:latest`.
 3. **deploy**: over SSH as `deploy@<server>` uploads `deploy/compose.yml`, pins `IMAGE_TAG=<sha>` in `/opt/devkg-watcher/.env`, pulls the image and runs an import smoke test.
 
-The scheduled run itself is a systemd timer on the server (`deploy/devkg-watcher.timer`, 10:00 Asia/Bishkek) that calls `docker compose run --rm watcher`, so a deploy never interrupts a run in progress.
+The scheduled run itself is a systemd timer on the server (`deploy/devkg-watcher.timer`, 10:00 and 19:00 Asia/Bishkek) that calls `docker compose run --rm watcher`, so a deploy never interrupts a run in progress.
 
 Repository secrets: `DEPLOY_HOST`, `DEPLOY_SSH_KEY` (private key of the `deploy` user), `DEPLOY_KNOWN_HOSTS`.
 
